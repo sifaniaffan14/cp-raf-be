@@ -2,13 +2,14 @@ package utils
 
 import (
 	"time"
-
+	"math"
+	"reflect"
 	"github.com/gin-gonic/gin"
 )
 
 type Response struct {
 	Error       bool        `json:"error"`
-	Code        interface{} `json:"code"`
+	Code        interface{}      `json:"code"`
 	Message     interface{} `json:"message"`
 	RequestedAt string      `json:"requestedAt"`
 	RespondedAt string      `json:"respondedAt"`
@@ -83,4 +84,54 @@ func SendError(c *gin.Context, errMsg interface{}, code interface{}, httpCode in
 	}
 
 	c.JSON(httpCode, response)
+}
+
+type Meta struct {
+	CurrentPage int    `json:"current_page"`
+	PerPage     int    `json:"per_page"`
+	Total       int    `json:"total"`
+	LastPage    int    `json:"last_page"`
+}
+
+func Paginate(c *gin.Context, items interface{}, page, perPage int) (interface{}, Meta) {
+	switch reflect.TypeOf(items).Kind() {
+	case reflect.Slice:
+		return paginateArray(items, page, perPage)
+	default:
+		return nil, Meta{}
+	}
+}
+
+func paginateArray(items interface{}, page, perPage int) (interface{}, Meta) {
+	val := reflect.ValueOf(items)
+	if val.Kind() != reflect.Slice {
+		return nil, Meta{}
+	}
+
+	total := val.Len()
+	lastPage := int(math.Ceil(float64(total) / float64(perPage)))
+	offset := (page - 1) * perPage
+
+	if offset > total {
+		return []interface{}{}, Meta{
+			CurrentPage: page,
+			PerPage:     perPage,
+			Total:       total,
+			LastPage:    lastPage,
+		}
+	}
+
+	end := offset + perPage
+	if end > total {
+		end = total
+	}
+
+	data := val.Slice(offset, end).Interface()
+	meta := Meta{
+		CurrentPage: page,
+		PerPage:     perPage,
+		Total:       total,
+		LastPage:    lastPage,
+	}
+	return data, meta
 }

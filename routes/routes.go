@@ -9,4 +9,6 @@ import (
 func SetupRoutes(router *gin.Engine) {
 	router.GET("/admin/pages", controllers.GetPages)
 	router.POST("/admin/pages", controllers.CreatePage)
+	router.PUT("/admin/pages", controllers.UpdatePage)
+	router.DELETE("/admin/pages", controllers.DeletePage)
 }
