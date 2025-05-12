@@ -20,8 +20,8 @@ func main() {
 
 
 	database.Connect()
-	database.DB.AutoMigrate(&models.Page{})
-
+	database.DB.AutoMigrate(&models.Page{}, &models.Banner{})
+	
 	router := gin.Default()
 	routes.SetupRoutes(router)
 

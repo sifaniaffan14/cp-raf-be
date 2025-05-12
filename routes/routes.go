@@ -11,4 +11,6 @@ func SetupRoutes(router *gin.Engine) {
 	router.POST("/admin/pages", controllers.CreatePage)
 	router.PUT("/admin/pages", controllers.UpdatePage)
 	router.DELETE("/admin/pages", controllers.DeletePage)
+
+	router.POST("/admin/banners", controllers.CreateBanner)
 }

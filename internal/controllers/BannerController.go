@@ -6,14 +6,32 @@ import (
 	"cp-raf-be/validators"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"cp-raf-be/helpers"
 )
+
+var bannerService = services.BannerService{}
 	// Ambil data dari service
 func CreateBanner(c *gin.Context) {
-	var req validators.CreatePageRequest
+	tittle := c.PostForm("tittle")
+	description := c.PostForm("description")
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.SendError(c, "Invalid JSON", "VALIDATION_ERROR", http.StatusBadRequest)
+	file, err := c.FormFile("image")
+	if err != nil {
+		utils.SendError(c, "Image is required", "VALIDATION_ERROR", http.StatusBadRequest)
 		return
+	}
+
+	// Upload ke S3/Minio
+	imageUrl, err := helpers.UploadToS3(file)
+	if err != nil {
+		utils.SendError(c, "Failed to upload image: "+err.Error(), "UPLOAD_ERROR", http.StatusInternalServerError)
+		return
+	}
+
+	req := validators.CreateBannerRequest{
+		ImageUrl:   imageUrl,
+		Tittle:     tittle,
+		Description: description,
 	}
 
 	if err := req.Validate(); err != nil {
@@ -21,21 +39,18 @@ func CreateBanner(c *gin.Context) {
 		return
 	}
 
-	// Memanggil service untuk membuat halaman
-	pageService := services.PageService{}
-	page, err := pageService.CreatePage(req)
+	banner, err := bannerService.CreateBanner(req)
 	if err != nil {
 		utils.SendError(c, err.Error(), "DB_ERROR", http.StatusInternalServerError)
 		return
 	}
 
-	// Hanya mengembalikan data yang dibutuhkan
 	responseData := gin.H{
-		"id":      page.ID,
-		"title":   page.Title,
-		"content": page.Content,
-		"slug":    page.Slug,
+		"id":          banner.Id,
+		"imageUrl":    banner.ImageUrl,
+		"tittle":      banner.Tittle,
+		"description": banner.Description,
 	}
 
-	utils.SendResponse(c, responseData, "Page created successfully", http.StatusCreated)
+	utils.SendResponse(c, responseData, "Banner created successfully", http.StatusCreated)
 }
