@@ -2,8 +2,9 @@ package services
 
 import (
 	"cp-raf-be/database"
-	"cp-raf-be/models"
+	"cp-raf-be/internal/models"
 	"cp-raf-be/validators"
+	"cp-raf-be/internal/dto"
 	"fmt"
 	"strconv"
 )
@@ -26,13 +27,19 @@ func (s *PageService) CreatePage(req validators.CreatePageRequest) (models.Page,
 }
 
 // GetPages retrieves all pages from the database
-func (s *PageService) GetPages() ([]models.Page, error) {
+func (s *PageService) GetPages() ([]dto.PageResponse, error) {
 	var pages []models.Page
 	if err := database.DB.Find(&pages).Error; err != nil {
 		return nil, err
 	}
 
-	return pages, nil
+	// Mapping models.Page ke dto.PageResponse
+	var result []dto.PageResponse
+	for _, p := range pages {
+		result = append(result, dto.TransformPage(p))  // Hanya memilih Title dan Slug
+	}
+
+	return result, nil
 }
 
 // UpdatePage updates an existing page based on the request

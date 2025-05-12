@@ -86,11 +86,40 @@ func SendError(c *gin.Context, errMsg interface{}, code interface{}, httpCode in
 	c.JSON(httpCode, response)
 }
 
+const (
+	DefaultPerPage = 15
+	DefaultPage    = 1
+)
+
 type Meta struct {
 	CurrentPage int    `json:"current_page"`
 	PerPage     int    `json:"per_page"`
 	Total       int    `json:"total"`
 	LastPage    int    `json:"last_page"`
+}
+
+type PaginationPayload struct {
+	Page    int `json:"page"`
+	PerPage int `json:"perPage"`
+}
+
+func GetPaginationParams(c *gin.Context) (int, int) {
+	var payload PaginationPayload
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		return DefaultPage, DefaultPerPage
+	}
+
+	page := payload.Page
+	perPage := payload.PerPage
+
+	if page <= 0 {
+		page = DefaultPage
+	}
+	if perPage <= 0 {
+		perPage = DefaultPerPage
+	}
+
+	return page, perPage
 }
 
 func Paginate(c *gin.Context, items interface{}, page, perPage int) (interface{}, Meta) {

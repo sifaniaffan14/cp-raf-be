@@ -1,7 +1,7 @@
 package validators
 
 import (
-	"cp-raf-be/models"
+	"cp-raf-be/internal/models"
 	"fmt"
 )
 

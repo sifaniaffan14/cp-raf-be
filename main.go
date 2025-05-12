@@ -2,7 +2,7 @@ package main
 
 import (
 	"cp-raf-be/database"
-    "cp-raf-be/models"
+    "cp-raf-be/internal/models"
     "cp-raf-be/routes"
 	"cp-raf-be/validators"
 	"github.com/gin-gonic/gin"

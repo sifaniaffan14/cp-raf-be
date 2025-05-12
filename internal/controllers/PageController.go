@@ -1,12 +1,14 @@
 package controllers
 
 import (
-	"cp-raf-be/services"
+	"cp-raf-be/internal/services"
 	"cp-raf-be/utils"
 	"cp-raf-be/validators"
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"net/http"
-	"strconv"
+	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 var pageService = services.PageService{}
@@ -43,8 +45,12 @@ func CreatePage(c *gin.Context) {
 	utils.SendResponse(c, responseData, "Page created successfully", http.StatusCreated)
 }
 
+func dd(v interface{}) {
+	fmt.Printf("%+v\n", v)
+	os.Exit(1)
+}
+
 func GetPages(c *gin.Context) {
-	// Ambil data dari service
 	pages, err := pageService.GetPages()
 	if err != nil {
 		utils.SendError(c, err.Error(), "DB_ERROR", http.StatusInternalServerError)
@@ -56,51 +62,14 @@ func GetPages(c *gin.Context) {
 		return
 	}
 
-	// Gunakan struct dari validators untuk pagination request
-	var pagination validators.PaginationRequest
-	_ = c.ShouldBindJSON(&pagination)
+	page, perPage := utils.GetPaginationParams(c)
+	paginatedData, meta := utils.Paginate(c, pages, page, perPage)
 
-	// Prioritaskan dari payload JSON, fallback ke query string
-	perPage := c.DefaultQuery("perPage", "15")
-	if pagination.PerPage != "" {
-		perPage = pagination.PerPage
-	}
-	page := c.DefaultQuery("page", "1")
-	if pagination.Page != "" {
-		page = pagination.Page
-	}
-
-	// Konversi ke integer
-	perPageInt, err := strconv.Atoi(perPage)
-	if err != nil || perPageInt <= 0 {
-		perPageInt = 15
-	}
-	pageInt, err := strconv.Atoi(page)
-	if err != nil || pageInt <= 0 {
-		pageInt = 1
-	}
-
-	// Persiapkan hasil dengan merubah data yang akan dipaginate
-	var result []gin.H
-	for _, p := range pages {
-		result = append(result, gin.H{
-			"id":      p.ID,
-			"title":   p.Title,
-			"content": p.Content,
-			"slug":    p.Slug,
-		})
-	}
-
-	// Paginate data dan mengembalikan hasil
-	paginatedData, meta := utils.Paginate(c, result, pageInt, perPageInt)
-
-	// Kirim response hasil paginasi dengan meta data
 	utils.SendResponse(c, gin.H{
 		"pages": paginatedData,
-		"meta": meta,
+		"meta":  meta,
 	}, "Pages retrieved successfully", http.StatusOK)
 }
-
 func UpdatePage(c *gin.Context) {
 	var req validators.UpdatePageRequest
 

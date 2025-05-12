@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"cp-raf-be/controllers"
+	"cp-raf-be/internal/controllers"
 
 	"github.com/gin-gonic/gin"
 )
